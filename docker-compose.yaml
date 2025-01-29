@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_container
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: go_backend_container
+    ports:
+      - '8080:8080'
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/todo
+
+  frontend:
+    build:
+      context: ./frontend/todo_app
+      dockerfile: Dockerfile
+    container_name: flutter_frontend_container
+    working_dir: /app
+    volumes:
+      - ./frontend/todo_app:/app
+    ports:
+      - '14888:14888'
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:
