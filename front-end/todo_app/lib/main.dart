@@ -62,7 +62,8 @@ class _TaskListState extends State<TaskList> {
     // Открываем диалоговое окно для редактирования задачи
     final updatedTask = await showDialog<Task>(
       context: context,
-      builder: (context) => EditTaskDialog(task: task),
+      builder: (context) =>
+          EditTaskDialog(task: task, onDelete: () => deleteTask(task.id)),
     );
 
     if (updatedTask != null) {
@@ -98,6 +99,9 @@ class _TaskListState extends State<TaskList> {
             ),
             onLongPress: () {
               deleteTask(task.id);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Task deleted")),
+              );
             },
             onTap: () {
               editTask(task);
@@ -115,8 +119,9 @@ class _TaskListState extends State<TaskList> {
 
 class EditTaskDialog extends StatefulWidget {
   final Task task;
+  final VoidCallback onDelete;
 
-  EditTaskDialog({required this.task});
+  EditTaskDialog({required this.task, required this.onDelete});
 
   @override
   _EditTaskDialogState createState() => _EditTaskDialogState();
@@ -146,7 +151,19 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Edit Task'),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('Edit Task'),
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () {
+              widget.onDelete();
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -154,8 +171,10 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
             controller: _titleController,
             decoration: InputDecoration(labelText: 'Title'),
           ),
+          SizedBox(height: 10),
           TextField(
             controller: _descriptionController,
+            maxLines: null, // Позволяем многострочный ввод
             decoration: InputDecoration(labelText: 'Description'),
           ),
           CheckboxListTile(
