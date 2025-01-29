@@ -63,6 +63,12 @@ func createTask(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
+
+    // Если название задачи пустое, установим его как "-"
+    if task.Title == "" {
+        task.Title = "-"
+    }
+
     collection := client.Database("todo").Collection("tasks")
     result, err := collection.InsertOne(context.Background(), task)
     if err != nil {
@@ -123,6 +129,12 @@ func updateTask(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
+
+    // Если название задачи пустое, установим его как "-"
+    if task.Title == "" {
+        task.Title = "-"
+    }
+
     collection := client.Database("todo").Collection("tasks")
     filter := bson.M{"_id": objID}
     update := bson.M{
