@@ -46,7 +46,8 @@ class _TaskListState extends State<TaskList> {
   }
 
   Future<void> addTask() async {
-    final newTask = Task(id: '', title: 'New Task', completed: false);
+    final newTask =
+        Task(id: '', title: 'New Task', description: '', completed: false);
     await apiService.createTask(newTask);
     fetchTasks();
   }
@@ -55,6 +56,19 @@ class _TaskListState extends State<TaskList> {
     task.completed = !task.completed;
     await apiService.updateTask(task);
     fetchTasks();
+  }
+
+  Future<void> editTask(Task task) async {
+    // Открываем диалоговое окно для редактирования задачи
+    final updatedTask = await showDialog<Task>(
+      context: context,
+      builder: (context) => EditTaskDialog(task: task),
+    );
+
+    if (updatedTask != null) {
+      await apiService.updateTask(updatedTask);
+      fetchTasks();
+    }
   }
 
   Future<void> deleteTask(String id) async {
@@ -74,6 +88,8 @@ class _TaskListState extends State<TaskList> {
           final task = tasks[index];
           return ListTile(
             title: Text(task.title),
+            subtitle:
+                task.description.isNotEmpty ? Text(task.description) : null,
             trailing: Checkbox(
               value: task.completed,
               onChanged: (value) {
@@ -83,6 +99,9 @@ class _TaskListState extends State<TaskList> {
             onLongPress: () {
               deleteTask(task.id);
             },
+            onTap: () {
+              editTask(task);
+            },
           );
         },
       ),
@@ -90,6 +109,86 @@ class _TaskListState extends State<TaskList> {
         onPressed: addTask,
         child: Icon(Icons.add),
       ),
+    );
+  }
+}
+
+class EditTaskDialog extends StatefulWidget {
+  final Task task;
+
+  EditTaskDialog({required this.task});
+
+  @override
+  _EditTaskDialogState createState() => _EditTaskDialogState();
+}
+
+class _EditTaskDialogState extends State<EditTaskDialog> {
+  late TextEditingController _titleController;
+  late TextEditingController _descriptionController;
+  bool _completed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.task.title);
+    _descriptionController =
+        TextEditingController(text: widget.task.description);
+    _completed = widget.task.completed;
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Edit Task'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _titleController,
+            decoration: InputDecoration(labelText: 'Title'),
+          ),
+          TextField(
+            controller: _descriptionController,
+            decoration: InputDecoration(labelText: 'Description'),
+          ),
+          CheckboxListTile(
+            title: Text('Completed'),
+            value: _completed,
+            onChanged: (value) {
+              setState(() {
+                _completed = value ?? false;
+              });
+            },
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(null);
+          },
+          child: Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () {
+            final updatedTask = Task(
+              id: widget.task.id,
+              title: _titleController.text,
+              description: _descriptionController.text,
+              completed: _completed,
+            );
+            Navigator.of(context).pop(updatedTask);
+          },
+          child: Text('Save'),
+        ),
+      ],
     );
   }
 }

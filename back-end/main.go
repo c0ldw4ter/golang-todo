@@ -16,9 +16,10 @@ import (
 
 // Task represents a task in the todo list
 type Task struct {
-    ID        primitive.ObjectID `bson:"_id,omitempty"`
-    Title     string             `bson:"title"`
-    Completed bool               `bson:"completed"`
+    ID          primitive.ObjectID `bson:"_id,omitempty"`
+    Title       string             `bson:"title"`
+    Description string             `bson:"description"`
+    Completed   bool               `bson:"completed"`
 }
 
 var client *mongo.Client
@@ -70,9 +71,10 @@ func createTask(c *gin.Context) {
     }
     task.ID = result.InsertedID.(primitive.ObjectID)
     c.JSON(http.StatusOK, map[string]interface{}{
-        "_id":       task.ID.Hex(),
-        "title":     task.Title,
-        "completed": task.Completed,
+        "_id":        task.ID.Hex(),
+        "title":      task.Title,
+        "description": task.Description,
+        "completed":  task.Completed,
     })
 }
 
@@ -100,9 +102,10 @@ func getTasks(c *gin.Context) {
     responseTasks := make([]map[string]interface{}, len(tasks))
     for i, task := range tasks {
         responseTasks[i] = map[string]interface{}{
-            "_id":       task.ID.Hex(),
-            "title":     task.Title,
-            "completed": task.Completed,
+            "_id":        task.ID.Hex(),
+            "title":      task.Title,
+            "description": task.Description,
+            "completed":  task.Completed,
         }
     }
     c.JSON(http.StatusOK, responseTasks)
@@ -124,8 +127,9 @@ func updateTask(c *gin.Context) {
     filter := bson.M{"_id": objID}
     update := bson.M{
         "$set": bson.M{
-            "title":     task.Title,
-            "completed": task.Completed,
+            "title":       task.Title,
+            "description": task.Description,
+            "completed":   task.Completed,
         },
     }
     result, err := collection.UpdateOne(context.Background(), filter, update)
